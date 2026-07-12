@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webserv Test Interface</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; background: #0d1117; color: #c9d1d9; padding: 20px; }
+h1 { color: #58a6ff; font-size: 22px; margin-bottom: 4px; }
+.subtitle { color: #8b949e; font-size: 13px; margin-bottom: 20px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px; max-width: 1400px; margin: 0 auto; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+.card h2 { font-size: 15px; color: #f0f6fc; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #21262d; }
+label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+input, select { width: 100%; padding: 7px 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 13px; font-family: monospace; margin-bottom: 8px; }
+input:focus { outline: none; border-color: #58a6ff; }
+.row { display: flex; gap: 8px; }
+.row input { flex: 1; }
+.btn { padding: 7px 16px; background: #21262d; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.btn:hover { background: #30363d; }
+.btn-primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+.btn-primary:hover { background: #388bfd; }
+.btn-danger { background: #da3633; border-color: #da3633; color: #fff; }
+.btn-danger:hover { background: #f85149; }
+.btn-success { background: #238636; border-color: #238636; color: #fff; }
+.btn-success:hover { background: #2ea043; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 6px; }
+.badge-green { background: #238636; color: #fff; }
+.badge-red { background: #da3633; color: #fff; }
+.badge-yellow { background: #d29922; color: #fff; }
+.badge-blue { background: #1f6feb; color: #fff; }
+.badge-gray { background: #21262d; color: #8b949e; }
+.response { margin-top: 8px; border: 1px solid #21262d; border-radius: 6px; overflow: hidden; display: none; }
+.response-header { background: #0d1117; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: center; }
+.response-body { background: #0d1117; padding: 12px; font-size: 12px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; font-family: monospace; }
+.status-2xx { border-color: #238636; }
+.status-2xx .response-header { color: #3fb950; }
+.status-3xx { border-color: #d29922; }
+.status-3xx .response-header { color: #d29922; }
+.status-4xx { border-color: #da3633; }
+.status-4xx .response-header { color: #f85149; }
+.status-5xx { border-color: #da3633; }
+.status-5xx .response-header { color: #f85149; }
+.file-list { margin-top: 8px; }
+.file-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #0d1117; border: 1px solid #21262d; border-radius: 4px; margin-bottom: 4px; font-size: 13px; }
+.file-item .name { color: #58a6ff; }
+.file-item .size { color: #8b949e; font-size: 12px; }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin .6s linear infinite; margin-right: 6px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hidden { display: none; }
+.empty-state { color: #8b949e; font-size: 13px; text-align: center; padding: 20px; }
+.header-rows { font-size: 12px; padding: 8px 12px; background: #0d1117; border-bottom: 1px solid #21262d; }
+.header-rows div { padding: 2px 0; font-family: monospace; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 12px; }
+.tab { padding: 6px 14px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 12px; color: #8b949e; }
+.tab.active { background: #161b22; border-bottom-color: #161b22; color: #f0f6fc; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.file-list-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } .file-list-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>&#x1F6E1;&#xFE0F; Webserv Test Interface</h1>
+<p class="subtitle">Test all server functionalities from one page</p>
+
+<div class="grid">
+
+  <!-- ─── SERVER INFO ─── -->
+  <div class="card">
+    <h2>&#x1F4E1; Servers</h2>
+    <div style="font-size:13px;line-height:1.8">
+      <div><span class="badge badge-blue">8080</span> Main server — static files, upload, delete</div>
+      <div><span class="badge badge-blue">8081</span> Directory listing enabled</div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:#8b949e">
+      Config: <code>config/default.conf</code><br>
+      Root: <code>www/</code> &nbsp; Upload: <code>www/uploads/</code>
+    </div>
+  </div>
+
+  <!-- ─── GET ─── -->
+  <div class="card">
+    <h2>&#x1F4C4; GET / HEAD</h2>
+    <label for="getUrl">URL</label>
+    <div class="row">
+      <input id="getUrl" value="/" placeholder="/path">
+      <select id="getMethod" style="width:auto;flex:0 0 80px">
+        <option value="GET">GET</option>
+        <option value="HEAD">HEAD</option>
+      </select>
+      <button class="btn btn-primary" onclick="doFetch()">Send</button>
+    </div>
+    <div id="getResponse" class="response">
+      <div class="response-header"><span id="getStatus">-</span> <span id="getSize">-</span></div>
+      <div id="getHeaders" class="header-rows"></div>
+      <div id="getBody" class="response-body"></div>
+    </div>
+  </div>
+
+  <!-- ─── UPLOAD ─── -->
+  <div class="card">
+    <h2>&#x1F4E4; Upload</h2>
+    <label for="uploadFile">File to upload</label>
+    <input type="file" id="uploadFile">
+    <label for="uploadName" style="margin-top:4px">Custom filename (optional)</label>
+    <div class="row">
+      <input id="uploadName" placeholder="Leave blank for original name">
+      <button class="btn btn-success" onclick="doUpload()">Upload</button>
+    </div>
+    <div id="uploadResponse" class="response">
+      <div class="response-header"><span id="uploadStatus">-</span> <span id="uploadMsg">-</span></div>
+    </div>
+  </div>
+
+  <!-- ─── DELETE ─── -->
+  <div class="card">
+    <h2>&#x1F5D1;&#xFE0F; Delete</h2>
+    <label for="deleteFile">Filename in <code>www/uploads/</code></label>
+    <div class="row">
+      <input id="deleteFile" placeholder="e.g. uploaded.html">
+      <button class="btn btn-danger" onclick="doDelete()">Delete</button>
+    </div>
+    <div id="deleteResponse" class="response">
+      <div class="response-header"><span id="deleteStatus">-</span> <span id="deleteMsg">-</span></div>
+    </div>
+  </div>
+
+  <!-- ─── ERROR TESTING ─── -->
+  <div class="card">
+    <h2>&#x26A0;&#xFE0F; Error Testing</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <button class="btn btn-sm" onclick="testError('/nonexistent')">404 Not Found</button>
+      <button class="btn btn-sm" onclick="testError('/cgi-bin')">403 Forbidden</button>
+      <button class="btn btn-sm" onclick="testLargeUpload()">413 Too Large</button>
+      <button class="btn btn-sm" onclick="testError('/')">200 OK</button>
+    </div>
+    <div id="errorResponse" class="response" style="margin-top:8px">
+      <div class="response-header"><span id="errorStatus">-</span> <span id="errorMsg">-</span></div>
+      <div id="errorBody" class="response-body"></div>
+    </div>
+  </div>
+
+  <!-- ─── DIRECTORY LISTING ─── -->
+  <div class="card">
+    <h2>&#x1F4C1; Directory Listing <span class="badge badge-yellow">port 8081</span></h2>
+    <div class="row">
+      <input id="dirPath" value="/" placeholder="/path">
+      <button class="btn btn-primary" onclick="doDirListing()">Browse</button>
+    </div>
+    <div id="dirResponse" class="response">
+      <div class="response-header"><span id="dirStatus">-</span> <span id="dirSize">-</span></div>
+      <div id="dirBody" class="response-body"></div>
+    </div>
+  </div>
+
+  <!-- ─── UPLOADED FILES BROWSER ─── -->
+  <div class="card">
+    <h2>&#x1F4C2; Uploaded Files</h2>
+    <div id="uploadedFiles"><div class="empty-state">Click refresh to list files</div></div>
+    <button class="btn btn-sm" onclick="listUploads()" style="margin-top:8px">&#x1F504; Refresh file list</button>
+    <div id="browseResponse" class="response" style="margin-top:8px">
+      <div class="response-header"><span id="browseStatus">-</span></div>
+      <div id="browseBody" class="response-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── HELPERS ───
+function show(el) { el.style.display = 'block'; }
+function hide(el) { el.style.display = 'none'; }
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderStatus(code) {
+  const cls = code < 300 ? 'badge-green' : code < 400 ? 'badge-yellow' : 'badge-red';
+  return `<span class="badge ${cls}">${code}</span>`;
+}
+
+function formatHeaders(text) {
+  if (!text) return '';
+  return text.split('\n').filter(l => l).map(l => `<div>${escapeHtml(l)}</div>`).join('');
+}
+
+// ─── GET / HEAD ───
+function doFetch() {
+  const url = document.getElementById('getUrl').value;
+  const method = document.getElementById('getMethod').value;
+  const resp = document.getElementById('getResponse');
+  const statusEl = document.getElementById('getStatus');
+  const sizeEl = document.getElementById('getSize');
+  const headersEl = document.getElementById('getHeaders');
+  const bodyEl = document.getElementById('getBody');
+
+  statusEl.innerHTML = '<span class="spinner"></span> loading...';
+  show(resp);
+  resp.className = 'response';
+
+  fetch(url, { method })
+    .then(r => {
+      const status = r.status;
+      resp.className = `response status-${status < 300 ? '2xx' : status < 400 ? '3xx' : '4xx'}`;
+      statusEl.innerHTML = renderStatus(status) + ' ' + escapeHtml(r.statusText);
+
+      const hdrs = [];
+      r.headers.forEach((v, k) => hdrs.push(`${k}: ${v}`));
+      headersEl.innerHTML = formatHeaders(hdrs.join('\n'));
+
+      if (method === 'HEAD') {
+        sizeEl.textContent = '(headers only)';
+        bodyEl.textContent = '(HEAD — no body)';
+        return '';
+      }
+      return r.text();
+    })
+    .then(body => {
+      if (body !== undefined) {
+        sizeEl.textContent = body.length + ' bytes';
+        bodyEl.textContent = body;
+      }
+    })
+    .catch(err => {
+      statusEl.innerHTML = renderStatus(0) + ' Error';
+      sizeEl.textContent = err.message;
+      bodyEl.textContent = '';
+    });
+}
+
+// ─── UPLOAD ───
+function doUpload() {
+  const fileInput = document.getElementById('uploadFile');
+  const customName = document.getElementById('uploadName').value.trim();
+  const resp = document.getElementById('uploadResponse');
+  const statusEl = document.getElementById('uploadStatus');
+  const msgEl = document.getElementById('uploadMsg');
+
+  if (!fileInput.files.length) { alert('Select a file first'); return; }
+
+  statusEl.innerHTML = '<span class="spinner"></span> uploading...';
+  show(resp);
+  resp.className = 'response';
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0], customName || undefined);
+
+  fetch('/upload', { method: 'POST', body: formData })
+    .then(r => {
+      const status = r.status;
+      resp.className = `response status-${status < 300 ? '2xx' : '4xx'}`;
+      statusEl.innerHTML = renderStatus(status) + ' ' + escapeHtml(r.statusText);
+      return r.text();
+    })
+    .then(body => {
+      const m = body.match(/<h1>(\d+ .*?)<\/h1>/);
+      msgEl.textContent = m ? m[1] : body.slice(0, 80);
+    })
+    .catch(err => {
+      statusEl.innerHTML = renderStatus(0) + ' Error';
+      msgEl.textContent = err.message;
+    });
+}
+
+// ─── DELETE ───
+function doDelete() {
+  const filename = document.getElementById('deleteFile').value.trim();
+  const resp = document.getElementById('deleteResponse');
+  const statusEl = document.getElementById('deleteStatus');
+  const msgEl = document.getElementById('deleteMsg');
+
+  if (!filename) { alert('Enter a filename'); return; }
+
+  statusEl.innerHTML = '<span class="spinner"></span> deleting...';
+  show(resp);
+  resp.className = 'response';
+
+  fetch('/upload/' + encodeURIComponent(filename), { method: 'DELETE' })
+    .then(r => {
+      const status = r.status;
+      resp.className = `response status-${status < 300 ? '2xx' : '4xx'}`;
+      statusEl.innerHTML = renderStatus(status) + ' ' + escapeHtml(r.statusText);
+      return r.text();
+    })
+    .then(body => {
+      const m = body.match(/<h1>(\d+ .*?)<\/h1>/);
+      msgEl.textContent = m ? m[1] : body.slice(0, 80);
+    })
+    .catch(err => {
+      statusEl.innerHTML = renderStatus(0) + ' Error';
+      msgEl.textContent = err.message;
+    });
+}
+
+// ─── ERRORS ───
+function testError(url) {
+  const resp = document.getElementById('errorResponse');
+  const statusEl = document.getElementById('errorStatus');
+  const msgEl = document.getElementById('errorMsg');
+  const bodyEl = document.getElementById('errorBody');
+
+  statusEl.innerHTML = '<span class="spinner"></span> loading...';
+  show(resp);
+  resp.className = 'response';
+
+  fetch(url)
+    .then(r => {
+      const status = r.status;
+      resp.className = `response status-${status < 300 ? '2xx' : status < 400 ? '3xx' : '4xx'}`;
+      statusEl.innerHTML = renderStatus(status) + ' ' + escapeHtml(r.statusText);
+      return r.text();
+    })
+    .then(body => {
+      bodyEl.textContent = body;
+      msgEl.textContent = body.length + ' bytes';
+    })
+    .catch(err => {
+      statusEl.innerHTML = renderStatus(0) + ' Error';
+      msgEl.textContent = err.message;
+    });
+}
+
+function testLargeUpload() {
+  const resp = document.getElementById('errorResponse');
+  const statusEl = document.getElementById('errorStatus');
+  const msgEl = document.getElementById('errorMsg');
+  const bodyEl = document.getElementById('errorBody');
+
+  const big = new Blob(['x'.repeat(12 * 1024 * 1024)]); // 12MB
+  const fd = new FormData();
+  fd.append('file', big, 'large.bin');
+
+  statusEl.innerHTML = '<span class="spinner"></span> uploading 12MB...';
+  show(resp);
+  resp.className = 'response';
+
+  fetch('/upload', { method: 'POST', body: fd })
+    .then(r => {
+      const status = r.status;
+      resp.className = `response status-${status < 300 ? '2xx' : '4xx'}`;
+      statusEl.innerHTML = renderStatus(status) + ' ' + escapeHtml(r.statusText);
+      return r.text();
+    })
+    .then(body => {
+      bodyEl.textContent = body;
+      msgEl.textContent = body.length + ' bytes';
+    })
+    .catch(err => {
+      statusEl.innerHTML = renderStatus(0) + ' Error';
+      msgEl.textContent = err.message;
+    });
+}
+
+// ─── DIRECTORY LISTING (port 8081) ───
+function doDirListing() {
+  const path = document.getElementById('dirPath').value;
+  const resp = document.getElementById('dirResponse');
+  const statusEl = document.getElementById('dirStatus');
+  const sizeEl = document.getElementById('dirSize');
+  const bodyEl = document.getElementById('dirBody');
+
+  statusEl.innerHTML = '<span class="spinner"></span> loading...';
+  show(resp);
+  resp.className = 'response';
+
+  fetch('http://127.0.0.1:8081' + path)
+    .then(r => {
+      const status = r.status;
+      resp.className = `response status-${status < 300 ? '2xx' : status < 400 ? '3xx' : '4xx'}`;
+      statusEl.innerHTML = renderStatus(status) + ' ' + escapeHtml(r.statusText);
+      return r.text();
+    })
+    .then(body => {
+      sizeEl.textContent = body.length + ' bytes';
+      bodyEl.textContent = body;
+    })
+    .catch(err => {
+      statusEl.innerHTML = renderStatus(0) + ' Error';
+      sizeEl.textContent = err.message;
+      bodyEl.textContent = '';
+    });
+}
+
+// ─── LIST UPLOADS ───
+function listUploads() {
+  const container = document.getElementById('uploadedFiles');
+  const resp = document.getElementById('browseResponse');
+  const statusEl = document.getElementById('browseStatus');
+  const bodyEl = document.getElementById('browseBody');
+
+  statusEl.innerHTML = '<span class="spinner"></span> loading...';
+  show(resp);
+  resp.className = 'response';
+
+  fetch('/uploads/')
+    .then(r => {
+      statusEl.innerHTML = renderStatus(r.status) + ' ' + escapeHtml(r.statusText);
+      resp.className = `response status-${r.status < 300 ? '2xx' : '4xx'}`;
+      return r.text();
+    })
+    .then(html => {
+      bodyEl.textContent = html;
+      // extract links from directory listing HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const links = doc.querySelectorAll('a');
+      if (links.length) {
+        let items = '';
+        links.forEach(a => {
+          const name = a.textContent;
+          if (name === '../' || name === '..') return;
+          items += `<div class="file-item"><span class="name">${escapeHtml(name)}</span></div>`;
+        });
+        container.innerHTML = items || '<div class="empty-state">No files</div>';
+      } else {
+        container.innerHTML = '<div class="empty-state">No files or listing unavailable</div>';
+      }
+    })
+    .catch(err => {
+      statusEl.innerHTML = renderStatus(0) + ' Error';
+      bodyEl.textContent = err.message;
+    });
+}
+</script>
+</body>
+</html>
